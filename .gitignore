@@ -1,0 +1,32 @@
+# 依赖
+node_modules/
+.pnpm-debug.log
+.yarn/
+
+# 构建产物
+dist/
+*.tsbuildinfo
+
+# 环境与配置（敏感信息）
+config.yaml
+config.test.yaml
+.env
+.env.local
+
+# 日志文件
+github_*.log
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.tmp
+result.md.tmp
