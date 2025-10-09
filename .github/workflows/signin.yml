@@ -1,4 +1,4 @@
-name: 签到任务
+name: signin
 
 on:
   # 定时任务 (每 8 小时执行一次)
