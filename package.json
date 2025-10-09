@@ -21,6 +21,7 @@
     "axios": "^1.7.9",
     "dayjs": "^1.11.13",
     "fs-extra": "^11.2.0",
+    "https-proxy-agent": "^7.0.6",
     "js-yaml": "^4.1.0",
     "markdown-table": "^3.0.4",
     "node-cron": "^3.0.3",

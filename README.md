@@ -10,6 +10,7 @@
 - 📝 **独立日志**：每个用户单独记录日志到 `github_<USER_ID>.log`
 - 🔍 **Dry-run 模式**：测试模式，不写入任何文件
 - 🛡️ **安全配置**：敏感信息配置在 `config.yaml`，自动忽略提交
+- 🔐 **ACW 验证**：自动处理阿里云 WAF 反爬虫验证，无需人工干预
 
 ## 快速开始
 
@@ -169,11 +170,13 @@ tsx src/index.ts --once --config=custom-config.yaml
 │   ├── types.ts          # 类型定义
 │   ├── time.ts           # 时间工具
 │   ├── http.ts           # HTTP 客户端
+│   ├── acw.ts            # ACW 验证算法
 │   ├── logger.ts         # 日志模块
 │   ├── result-writer.ts  # 结果写入
 │   ├── task-runner.ts    # 任务执行器
 │   └── scheduler.ts      # 调度器
 ├── config.example.yaml   # 配置文件模板
+├── ACW_SOLUTION.md       # ACW 验证详细说明
 ├── package.json
 └── tsconfig.json
 ```
@@ -218,6 +221,28 @@ pm2 logs anyrouter-signin
 2. 确认 Cookie 是否过期（重新获取）
 3. 确认网络连接是否正常
 4. 使用 `--once` 参数手动执行一次进行调试
+
+### Q: 什么是 ACW 验证？
+
+ACW (Alibaba Cloud WAF) 是阿里云的反爬虫验证机制。当服务器检测到可能的自动化请求时，会返回一个包含 JavaScript 代码的验证页面。
+
+本程序已内置 ACW 验证处理，当检测到验证请求时会：
+
+1. 自动提取验证参数
+2. 计算 `acw_sc__v2` cookie 值
+3. 更新请求 Cookie
+4. 自动重试请求
+
+整个过程无需人工干预，你会在日志中看到类似以下信息：
+
+```
+🔐 检测到 ACW 验证挑战，正在计算 acw_sc__v2...
+📝 提取到 arg1: [40位十六进制字符串]
+✅ 计算得到 acw_sc__v2: [计算结果]
+🔄 已更新 Cookie，准备重试请求...
+```
+
+详细说明请查看 [ACW_SOLUTION.md](./ACW_SOLUTION.md)
 
 ## License
 

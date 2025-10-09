@@ -28,7 +28,6 @@ async function executeUserTask(
 
   // 执行签到
   const signInResult = await signIn(httpConfig)
-
   if (!signInResult.success) {
     return {
       userId,
