@@ -71,8 +71,18 @@ pm2 start dist/index.js --name anyrouter-signin
 # 查看日志
 pm2 logs anyrouter-signin
 
+# 查看进程状态
+pm2 status anyrouter-signin
+
+# 重启进程
+pm2 restart anyrouter-signin
+
 # 停止进程
 pm2 stop anyrouter-signin
+
+# 设置开机自启动
+pm2 save
+pm2 startup
 ```
 
 ## 配置说明
