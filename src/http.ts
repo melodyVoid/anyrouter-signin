@@ -24,13 +24,78 @@ interface HttpClientConfig {
 }
 
 /**
+ * Cookie 缓存管理器（单例模式）
+ * 用于在整个会话期间缓存和复用已更新的 cookie
+ */
+class CookieCacheManager {
+  private static instance: CookieCacheManager
+  private cookieCache: Map<number, string> = new Map()
+
+  private constructor() {}
+
+  static getInstance(): CookieCacheManager {
+    if (!CookieCacheManager.instance) {
+      CookieCacheManager.instance = new CookieCacheManager()
+    }
+    return CookieCacheManager.instance
+  }
+
+  /**
+   * 获取用户的 cookie（优先使用缓存）
+   */
+  getCookie(userId: number, initialCookie: string): string {
+    const cached = this.cookieCache.get(userId)
+    if (cached) {
+      console.log(`📦 使用缓存的 Cookie (用户 ${userId})`)
+      return cached
+    }
+    console.log(`📦 使用初始 Cookie (用户 ${userId})`)
+    return initialCookie
+  }
+
+  /**
+   * 更新用户的 cookie 缓存
+   */
+  updateCookie(userId: number, newCookie: string): void {
+    this.cookieCache.set(userId, newCookie)
+    console.log(`💾 已缓存更新后的 Cookie (用户 ${userId})`)
+  }
+
+  /**
+   * 清除所有缓存（可选，用于测试）
+   */
+  clearAll(): void {
+    this.cookieCache.clear()
+    console.log('🗑️  已清除所有 Cookie 缓存')
+  }
+
+  /**
+   * 清除指定用户的缓存
+   */
+  clearUser(userId: number): void {
+    this.cookieCache.delete(userId)
+    console.log(`🗑️  已清除用户 ${userId} 的 Cookie 缓存`)
+  }
+}
+
+/**
  * 可变的 HTTP 配置（用于更新 cookie）
  */
 class MutableHttpConfig {
-  constructor(public config: HttpClientConfig) {}
+  private cookieManager = CookieCacheManager.getInstance()
+
+  constructor(public config: HttpClientConfig) {
+    // 优先使用缓存的 cookie
+    const cachedCookie = this.cookieManager.getCookie(config.userId, config.cookie)
+    if (cachedCookie !== config.cookie) {
+      this.config = { ...config, cookie: cachedCookie }
+    }
+  }
 
   updateCookie(newCookie: string): void {
     this.config = { ...this.config, cookie: newCookie }
+    // 同时更新到缓存管理器
+    this.cookieManager.updateCookie(this.config.userId, newCookie)
   }
 
   getCookie(): string {
@@ -42,8 +107,8 @@ class MutableHttpConfig {
  * 重试配置
  */
 const RETRY_CONFIG = {
-  maxRetries: 2,
-  retryDelay: 2000, // ms
+  maxRetries: 1,
+  retryDelay: 500, // ms
 }
 
 /**
@@ -54,13 +119,17 @@ const MAX_ACW_ATTEMPTS = 2
 /**
  * ACW 重试延迟（ms）
  */
-const ACW_RETRY_DELAY = 1000
+const ACW_RETRY_DELAY = 500
+
+/**
+ * 导出 Cookie 缓存管理器实例（用于手动管理缓存）
+ */
+export const cookieCacheManager = CookieCacheManager.getInstance()
 
 /**
  * 创建 HTTP 客户端
  */
 export function createHttpClient(config: HttpClientConfig): AxiosInstance {
-  console.log('createHttpClient', config.cookie)
   return axios.create({
     timeout: 15000,
     headers: {
@@ -273,8 +342,6 @@ export async function signIn(config: HttpClientConfig): Promise<SignInResponse> 
         client.post(mutableConfig.config.signInAPI, {}, { validateStatus: status => status < 500 }),
       )
 
-      console.log('signIn response', response.headers, response.data, response.status)
-
       // 处理 ACW 和 Cookie 更新
       const needsRetry = handleResponseUpdate(
         response.data,
@@ -391,7 +458,6 @@ export async function getUserInfo(config: HttpClientConfig): Promise<UserInfoRes
           error: '响应格式错误：不是有效的 JSON 对象',
         }
       }
-      console.log('getUserInfo response', data)
 
       // 检查 quota 字段
       if (typeof data.quota !== 'number') {

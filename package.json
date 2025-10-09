@@ -8,6 +8,7 @@
     "dev": "tsx src/index.ts",
     "build": "tsup src/index.ts --format esm --dts --clean",
     "start": "node dist/index.js",
+    "start:pm2": "pm2 start dist/index.js --name anyrouter-signin",
     "once": "tsx src/index.ts --once"
   },
   "keywords": [
@@ -33,6 +34,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.2",
     "@types/node-cron": "^3.0.11",
+    "pm2": "^6.0.13",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
