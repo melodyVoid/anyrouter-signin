@@ -1,33 +1,8 @@
-# anyrouter-signin 配置文件示例
-# 复制此文件为 config.yaml 并填入真实信息
-
-# 定时执行时间点（必填，至少一个）
-# 格式：HH:mm（24小时制），时区固定为 Asia/Shanghai
-schedule:
-  - '10:00' # 每天 10:00 执行
-  # - '22:30' # 可配置多个时间点
-
-# 签到接口 URL（可选，默认值如下）
-signInAPI: https://anyrouter.top/api/user/sign_in
-
-# 用户信息接口 URL（可选，默认值如下）
-userInfoAPI: https://anyrouter.top/api/user/self
-
-# Referer 请求头（可选，默认值如下）
-referer: https://anyrouter.top/console/topup
-
-# User-Agent 请求头（可选，默认值如下）
-userAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36
-
-# 并发执行用户数量（可选，默认 4）
-concurrency: 4
-
-# 结果文件路径（可选，默认 result.md）
-resultFile: result.md
-
-# Dry-run 模式（可选，默认 false）
-# 为 true 时只执行请求和计算，不写入任何文件
-dryRun: false
+# 通知配置（必填）
+notification:
+  appkey: 'your_appkey_here'
+  appsecret: 'your_appsecret_here'
+  toWorkCode: 'your_work_code_here'
 
 # 用户列表（必填，至少一个用户）
 users:

@@ -11,17 +11,25 @@ export interface UserConfig {
 }
 
 /**
+ * 通知配置
+ */
+export interface NotificationConfig {
+  appkey: string
+  appsecret: string
+  toWorkCode: string
+}
+
+/**
  * 应用配置
  */
 export interface Config {
-  schedule: string[]
   signInAPI: string
   userInfoAPI: string
   referer: string
   userAgent: string
   concurrency: number
-  resultFile: string
   dryRun: boolean
+  notification: NotificationConfig
   users: UserConfig[]
 }
 

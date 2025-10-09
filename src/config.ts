@@ -16,19 +16,25 @@ const UserConfigSchema = z.object({
 })
 
 /**
+ * 通知配置 Schema
+ */
+const NotificationConfigSchema = z.object({
+  appkey: z.string().min(1, 'notification.appkey 不能为空'),
+  appsecret: z.string().min(1, 'notification.appsecret 不能为空'),
+  toWorkCode: z.string().min(1, 'notification.toWorkCode 不能为空'),
+})
+
+/**
  * 配置 Schema
  */
 const ConfigSchema = z.object({
-  schedule: z
-    .array(z.string().regex(/^\d{2}:\d{2}$/, '时间格式必须为 HH:mm'))
-    .min(1, 'schedule 至少需要一个时间点'),
   signInAPI: z.string().url().optional(),
   userInfoAPI: z.string().url().optional(),
   referer: z.string().url().optional(),
   userAgent: z.string().optional(),
   concurrency: z.number().int().positive().optional(),
-  resultFile: z.string().optional(),
   dryRun: z.boolean().optional(),
+  notification: NotificationConfigSchema,
   users: z.array(UserConfigSchema).min(1, 'users 至少需要一个用户'),
 })
 
@@ -42,7 +48,6 @@ const DEFAULT_CONFIG: Partial<Config> = {
   userAgent:
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
   concurrency: 4,
-  resultFile: 'result.md',
   dryRun: false,
 }
 
@@ -75,14 +80,13 @@ export async function loadConfig(configPath = 'config.yaml'): Promise<Config> {
 
     // 返回完整配置
     return {
-      schedule: validatedConfig.schedule,
       signInAPI: validatedConfig.signInAPI || DEFAULT_CONFIG.signInAPI!,
       userInfoAPI: validatedConfig.userInfoAPI || DEFAULT_CONFIG.userInfoAPI!,
       referer: validatedConfig.referer || DEFAULT_CONFIG.referer!,
       userAgent: validatedConfig.userAgent || DEFAULT_CONFIG.userAgent!,
       concurrency: validatedConfig.concurrency || DEFAULT_CONFIG.concurrency!,
-      resultFile: validatedConfig.resultFile || DEFAULT_CONFIG.resultFile!,
       dryRun: validatedConfig.dryRun || DEFAULT_CONFIG.dryRun!,
+      notification: validatedConfig.notification,
       users: validatedConfig.users,
     }
   } catch (error) {

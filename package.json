@@ -7,9 +7,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsup src/index.ts --format esm --dts --clean",
-    "start": "node dist/index.js",
-    "start:pm2": "pm2 start dist/index.js --name anyrouter-signin",
-    "once": "tsx src/index.ts --once"
+    "start": "node dist/index.js"
   },
   "keywords": [
     "signin",
@@ -25,7 +23,6 @@
     "https-proxy-agent": "^7.0.6",
     "js-yaml": "^4.1.0",
     "markdown-table": "^3.0.4",
-    "node-cron": "^3.0.3",
     "p-limit": "^6.1.0",
     "zod": "^3.24.1"
   },
@@ -33,8 +30,6 @@
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.2",
-    "@types/node-cron": "^3.0.11",
-    "pm2": "^6.0.13",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"

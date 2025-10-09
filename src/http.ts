@@ -140,7 +140,7 @@ export function createHttpClient(config: HttpClientConfig): AxiosInstance {
       'New-Api-User': config.userId.toString(),
     },
     // 添加 HTTPS agent 配置
-    httpsAgent,
+    // httpsAgent,
   })
 }
 

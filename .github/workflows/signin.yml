@@ -1,0 +1,51 @@
+name: 签到任务
+
+on:
+  # 定时任务 (每 8 小时执行一次)
+  # UTC 时间 00:00, 08:00, 16:00 = 北京时间 08:00, 16:00, 00:00
+  schedule:
+    - cron: "0 */8 * * *"
+
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  signin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 创建配置文件
+        run: |
+          cat > config.yaml << 'EOF'
+          dryRun: false
+
+          notification:
+            appkey: ${{ secrets.NOTIFICATION_APPKEY }}
+            appsecret: ${{ secrets.NOTIFICATION_APPSECRET }}
+            toWorkCode: ${{ secrets.NOTIFICATION_TO_WORK_CODE }}
+
+          users:
+            - userId: ${{ secrets.USER_ID_1 }}
+              cookie: ${{ secrets.USER_COOKIE_1 }}
+            - userId: ${{ secrets.USER_ID_2 }}
+              cookie: ${{ secrets.USER_COOKIE_2 }}
+          EOF
+
+      - name: 执行签到
+        run: node dist/index.js

@@ -5,9 +5,9 @@
 import pLimit from 'p-limit'
 import { getUserInfo, signIn } from './http.js'
 import { writeLog } from './logger.js'
-import { writeResult } from './result-writer.js'
-import { formatDate, formatDateTime } from './time.js'
-import type { Config, TaskResult, TaskSummary } from './types.js'
+import { sendNotification } from './notification.js'
+import { formatDateTime } from './time.js'
+import type { Config, TaskResult } from './types.js'
 
 /**
  * 执行单个用户的签到任务
@@ -107,21 +107,18 @@ export async function runTask(config: Config): Promise<void> {
 
   await Promise.all(logEntries.map(entry => writeLog(entry, config.dryRun)))
 
-  // 如果全部失败，不写入结果文件
+  // 如果全部失败，不发送通知
   if (!hasAnySuccess) {
-    console.log('⚠️  所有用户签到失败，不写入结果文件\n')
+    console.log('⚠️  所有用户签到失败，不发送通知\n')
     return
   }
 
-  // 写入结果文件
-  const summary: TaskSummary = {
-    date: formatDate(),
-    results,
-    hasAnySuccess,
+  // 发送通知
+  try {
+    await sendNotification(results, config.notification, config.dryRun)
+  } catch (error) {
+    console.error('⚠️  通知发送失败，但签到任务已完成')
   }
-
-  const userIds = config.users.map(u => u.userId)
-  await writeResult(summary, config.resultFile, userIds, config.dryRun)
 
   console.log(`✨ 任务执行完成！\n`)
 }
