@@ -47,6 +47,16 @@ const RETRY_CONFIG = {
 }
 
 /**
+ * ACW 和 Cookie 处理的最大尝试次数
+ */
+const MAX_ACW_ATTEMPTS = 2
+
+/**
+ * ACW 重试延迟（ms）
+ */
+const ACW_RETRY_DELAY = 1000
+
+/**
  * 创建 HTTP 客户端
  */
 export function createHttpClient(config: HttpClientConfig): AxiosInstance {
@@ -214,13 +224,48 @@ function updateSingleCookie(cookie: string, name: string, value: string): string
 }
 
 /**
+ * 处理响应中的 ACW 和 Cookie 更新
+ * @returns 是否需要重试请求
+ */
+function handleResponseUpdate(
+  responseData: unknown,
+  setCookieHeader: string | string[] | undefined,
+  mutableConfig: MutableHttpConfig,
+): boolean {
+  let needsRetry = false
+
+  // 1. 首先检查是否是 ACW 验证挑战
+  if (handleAcwChallenge(responseData, mutableConfig)) {
+    console.log('🔄 ACW 验证已处理')
+    needsRetry = true
+  }
+
+  // 2. 从响应中提取并更新 cookie（acw_tc 和 cdn_sec_tc）
+  if (setCookieHeader) {
+    const currentCookie = mutableConfig.getCookie()
+    const updatedCookie = updateCookieFromResponse(currentCookie, setCookieHeader)
+    if (updatedCookie !== currentCookie) {
+      mutableConfig.updateCookie(updatedCookie)
+      console.log('🔄 已更新 Cookie（从 set-cookie header）')
+      needsRetry = true
+    }
+  }
+
+  return needsRetry
+}
+
+/**
  * 执行签到
  */
 export async function signIn(config: HttpClientConfig): Promise<SignInResponse> {
   const mutableConfig = new MutableHttpConfig(config)
 
-  // 最多尝试 3 次（1 次正常请求 + 1 次 ACW 验证后的重试 + 1 次更新 cookie 后的重试）
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < MAX_ACW_ATTEMPTS; attempt++) {
+    // 如果是重试，先等待一段时间
+    if (attempt > 0) {
+      await delay(ACW_RETRY_DELAY)
+    }
+
     const client = createHttpClient(mutableConfig.config)
 
     try {
@@ -230,35 +275,20 @@ export async function signIn(config: HttpClientConfig): Promise<SignInResponse> 
 
       console.log('signIn response', response.headers, response.data, response.status)
 
-      // 标记是否需要重试
-      let needsRetry = false
+      // 处理 ACW 和 Cookie 更新
+      const needsRetry = handleResponseUpdate(
+        response.data,
+        response.headers['set-cookie'],
+        mutableConfig,
+      )
 
-      // 1. 首先检查是否是 ACW 验证挑战
-      if (handleAcwChallenge(response.data, mutableConfig)) {
-        // ACW 验证已处理，标记需要重试
-        console.log('🔄 ACW 验证已处理')
-        needsRetry = true
-      }
-
-      // 2. 从响应中提取并更新 cookie（acw_tc 和 cdn_sec_tc）
-      const setCookieHeader = response.headers['set-cookie']
-      if (setCookieHeader) {
-        const currentCookie = mutableConfig.getCookie()
-        const updatedCookie = updateCookieFromResponse(currentCookie, setCookieHeader)
-        if (updatedCookie !== currentCookie) {
-          mutableConfig.updateCookie(updatedCookie)
-          console.log('🔄 已更新 Cookie（从 set-cookie header）')
-          needsRetry = true
-        }
-      }
-
-      // 3. 如果需要重试，继续下一次循环
-      if (needsRetry) {
-        console.log('🔄 准备重新请求...')
+      // 如果需要重试且还有剩余尝试次数，继续下一次循环
+      if (needsRetry && attempt < MAX_ACW_ATTEMPTS - 1) {
+        console.log(`🔄 准备重新请求... (${attempt + 1}/${MAX_ACW_ATTEMPTS})`)
         continue
       }
 
-      // 4. 检查 HTTP 状态
+      // 检查 HTTP 状态
       if (response.status < 200 || response.status >= 300) {
         return {
           success: false,
@@ -306,10 +336,10 @@ export async function signIn(config: HttpClientConfig): Promise<SignInResponse> 
     }
   }
 
-  // 如果两次尝试都失败了
+  // 如果所有尝试都失败了
   return {
     success: false,
-    error: 'ACW 验证失败：已尝试多次但仍无法通过验证',
+    error: `ACW 验证失败：已尝试 ${MAX_ACW_ATTEMPTS} 次但仍无法通过验证`,
   }
 }
 
@@ -319,8 +349,12 @@ export async function signIn(config: HttpClientConfig): Promise<SignInResponse> 
 export async function getUserInfo(config: HttpClientConfig): Promise<UserInfoResponse> {
   const mutableConfig = new MutableHttpConfig(config)
 
-  // 最多尝试 3 次（1 次正常请求 + 1 次 ACW 验证后的重试 + 1 次更新 cookie 后的重试）
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < MAX_ACW_ATTEMPTS; attempt++) {
+    // 如果是重试，先等待一段时间
+    if (attempt > 0) {
+      await delay(ACW_RETRY_DELAY)
+    }
+
     const client = createHttpClient(mutableConfig.config)
 
     try {
@@ -328,35 +362,20 @@ export async function getUserInfo(config: HttpClientConfig): Promise<UserInfoRes
         client.get(mutableConfig.config.userInfoAPI, { validateStatus: status => status < 500 }),
       )
 
-      // 标记是否需要重试
-      let needsRetry = false
+      // 处理 ACW 和 Cookie 更新
+      const needsRetry = handleResponseUpdate(
+        response.data,
+        response.headers['set-cookie'],
+        mutableConfig,
+      )
 
-      // 1. 首先检查是否是 ACW 验证挑战
-      if (handleAcwChallenge(response.data, mutableConfig)) {
-        // ACW 验证已处理，标记需要重试
-        console.log('🔄 ACW 验证已处理')
-        needsRetry = true
-      }
-
-      // 2. 从响应中提取并更新 cookie（acw_tc 和 cdn_sec_tc）
-      const setCookieHeader = response.headers['set-cookie']
-      if (setCookieHeader) {
-        const currentCookie = mutableConfig.getCookie()
-        const updatedCookie = updateCookieFromResponse(currentCookie, setCookieHeader)
-        if (updatedCookie !== currentCookie) {
-          mutableConfig.updateCookie(updatedCookie)
-          console.log('🔄 已更新 Cookie（从 set-cookie header）')
-          needsRetry = true
-        }
-      }
-
-      // 3. 如果需要重试，继续下一次循环
-      if (needsRetry) {
-        console.log('🔄 准备重新请求...')
+      // 如果需要重试且还有剩余尝试次数，继续下一次循环
+      if (needsRetry && attempt < MAX_ACW_ATTEMPTS - 1) {
+        console.log(`🔄 准备重新请求... (${attempt + 1}/${MAX_ACW_ATTEMPTS})`)
         continue
       }
 
-      // 4. 检查 HTTP 状态
+      // 检查 HTTP 状态
       if (response.status < 200 || response.status >= 300) {
         return {
           success: false,
@@ -410,9 +429,9 @@ export async function getUserInfo(config: HttpClientConfig): Promise<UserInfoRes
     }
   }
 
-  // 如果两次尝试都失败了
+  // 如果所有尝试都失败了
   return {
     success: false,
-    error: 'ACW 验证失败：已尝试多次但仍无法通过验证',
+    error: `ACW 验证失败：已尝试 ${MAX_ACW_ATTEMPTS} 次但仍无法通过验证`,
   }
 }
