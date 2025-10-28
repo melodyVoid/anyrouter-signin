@@ -33,3 +33,4 @@ result.md.tmp
 
 # 旧版本的结果文件（已废弃，使用通知推送代替）
 result.md
+notification.rest

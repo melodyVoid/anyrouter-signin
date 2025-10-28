@@ -7,6 +7,8 @@ notification:
 # 用户列表（必填，至少一个用户）
 users:
   - userId: 3542
+    userName: 'github_3542'
     cookie: 'session=your_session_here; other_cookie=value'
   - userId: 6159
+    userName: 'github_6159'
     cookie: 'session=another_session_here; other_cookie=value'

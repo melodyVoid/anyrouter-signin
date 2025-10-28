@@ -28,16 +28,17 @@ function calculateAmount(quota: number): string {
  * 生成签到结果表格
  */
 function generateResultTable(results: TaskResult[]): string {
-  const headers = ['用户 ID', '状态', '余额']
+  const headers = ['用户 ID', '用户名', '状态', '余额']
   const rows = results.map(result => {
     const userId = result.userId.toString()
+    const userName = result.userName
     const status = result.success ? '✅ 成功' : '❌ 失败'
     const amount =
       result.success && result.amount !== undefined ? calculateAmount(result.amount) : '-'
-    return [userId, status, amount]
+    return [userId, userName, status, amount]
   })
 
-  return markdownTable([headers, ...rows], { align: ['c', 'c', 'r'] })
+  return markdownTable([headers, ...rows], { align: ['c', 'c', 'c', 'r'] })
 }
 
 /**
@@ -52,7 +53,7 @@ export async function sendNotification(
     const date = formatDate()
     const table = generateResultTable(results)
 
-    const markdownText = `# AnyRouter 签到结果\n\n**日期**: ${date}\n\n${table}`
+    const markdownText = `## AnyRouter 签到结果\n\n**日期**: ${date}\n\n${table}`
 
     if (dryRun) {
       console.log('[DRY-RUN] 将要发送的通知内容：')
@@ -69,10 +70,12 @@ export async function sendNotification(
 
     // 发送消息
     const response = await axios.post(
-      'https://yach-oapi.zhiyinlou.com/v1/single/message/send',
+      // 'https://yach-oapi.zhiyinlou.com/v1/single/message/send', // 单人通知
+      'https://yach-oapi.zhiyinlou.com/group/robot/message/send', // 群通知
       new URLSearchParams({
         access_token: token,
-        to_work_code: config.toWorkCode,
+        // to_work_code: config.toWorkCode,
+        group_id: config.groupId,
         message: JSON.stringify({
           msgtype: 'markdown',
           markdown: {

@@ -12,6 +12,7 @@ import type { Config } from './types.js'
  */
 const UserConfigSchema = z.object({
   userId: z.number().int().positive('userId 必须是正整数'),
+  userName: z.string().min(1, 'userName 不能为空'),
   cookie: z.string().min(1, 'cookie 不能为空'),
 })
 
@@ -22,6 +23,7 @@ const NotificationConfigSchema = z.object({
   appkey: z.string().min(1, 'notification.appkey 不能为空'),
   appsecret: z.string().min(1, 'notification.appsecret 不能为空'),
   toWorkCode: z.string().min(1, 'notification.toWorkCode 不能为空'),
+  groupId: z.string().min(1, 'notification.groupId 不能为空'),
 })
 
 /**

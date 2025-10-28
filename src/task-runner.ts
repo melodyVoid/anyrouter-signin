@@ -14,6 +14,7 @@ import type { Config, TaskResult } from './types.js'
  */
 async function executeUserTask(
   userId: number,
+  userName: string,
   cookie: string,
   config: Config,
 ): Promise<TaskResult> {
@@ -31,6 +32,7 @@ async function executeUserTask(
   if (!signInResult.success) {
     return {
       userId,
+      userName,
       columnName: `github_${userId}`,
       success: false,
       error: signInResult.error,
@@ -44,6 +46,7 @@ async function executeUserTask(
   if (!userInfoResult.success) {
     return {
       userId,
+      userName,
       columnName: `github_${userId}`,
       success: false,
       error: userInfoResult.error,
@@ -54,6 +57,7 @@ async function executeUserTask(
   // 成功
   return {
     userId,
+    userName,
     columnName: `github_${userId}`,
     success: true,
     amount: userInfoResult.quota,
@@ -75,8 +79,8 @@ export async function runTask(config: Config): Promise<void> {
   // 执行所有用户任务
   const taskPromises = config.users.map(user =>
     limit(() => {
-      console.log(`📝 开始处理用户 ${user.userId}...`)
-      return executeUserTask(user.userId, user.cookie, config)
+      console.log(`📝 开始处理用户 ${user.userName} (${user.userId})...`)
+      return executeUserTask(user.userId, user.userName, user.cookie, config)
     }),
   )
 
@@ -87,9 +91,9 @@ export async function runTask(config: Config): Promise<void> {
   console.log('📊 任务执行结果：\n')
   results.forEach(result => {
     if (result.success) {
-      console.log(`✅ 用户 ${result.userId}: 签到成功，余额 ${result.amount}`)
+      console.log(`✅ ${result.userName} (${result.userId}): 签到成功，余额 ${result.amount}`)
     } else {
-      console.log(`❌ 用户 ${result.userId}: 签到失败 - ${result.error}`)
+      console.log(`❌ ${result.userName} (${result.userId}): 签到失败 - ${result.error}`)
     }
   })
   console.log(`${'─'.repeat(60)}\n`)

@@ -7,6 +7,7 @@
  */
 export interface UserConfig {
   userId: number
+  userName: string
   cookie: string
 }
 
@@ -17,6 +18,7 @@ export interface NotificationConfig {
   appkey: string
   appsecret: string
   toWorkCode: string
+  groupId: string
 }
 
 /**
@@ -56,6 +58,7 @@ export interface UserInfoResponse {
  */
 export interface TaskResult {
   userId: number
+  userName: string
   columnName: string // github_<USER_ID>
   success: boolean
   amount?: number // 成功时的金额

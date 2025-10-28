@@ -1,10 +1,11 @@
 name: signin
 
 on:
-  # 定时任务 (每 8 小时执行一次)
-  # UTC 时间 00:00, 08:00, 16:00 = 北京时间 08:00, 16:00, 00:00
+  # 定时任务 (每天早上 6 点和下午 5 点)
+  # UTC 时间 22:00, 09:00 = 北京时间 06:00, 17:00
   schedule:
-    - cron: "0 */8 * * *"
+    - cron: "0 22 * * *" # 北京时间早上 6:00
+    - cron: "0 9 * * *" # 北京时间下午 17:00
 
   # 允许手动触发
   workflow_dispatch:
@@ -42,12 +43,21 @@ jobs:
             appkey: ${{ secrets.NOTIFICATION_APPKEY }}
             appsecret: ${{ secrets.NOTIFICATION_APPSECRET }}
             toWorkCode: ${{ secrets.NOTIFICATION_TO_WORK_CODE }}
+            groupId: ${{ secrets.NOTIFICATION_GROUP_ID }}
 
           users:
             - userId: ${{ secrets.USER_ID_1 }}
+              userName: ${{ secrets.USER_NAME_1 }}
               cookie: ${{ secrets.USER_COOKIE_1 }}
             - userId: ${{ secrets.USER_ID_2 }}
+              userName: ${{ secrets.USER_NAME_2 }}
               cookie: ${{ secrets.USER_COOKIE_2 }}
+            - userId: ${{ secrets.USER_ID_3 }}
+              userName: ${{ secrets.USER_NAME_3 }}
+              cookie: ${{ secrets.USER_COOKIE_3 }}
+            - userId: ${{ secrets.USER_ID_4 }}
+              userName: ${{ secrets.USER_NAME_4 }}
+              cookie: ${{ secrets.USER_COOKIE_4 }}
           EOF
 
       - name: 执行签到
